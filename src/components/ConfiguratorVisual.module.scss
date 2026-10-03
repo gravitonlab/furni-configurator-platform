@@ -1,0 +1,24 @@
+.visual { height: 340px; position: relative; overflow: hidden; background: #e6e3da; }
+.visual.olive { background: #dce0d4; }
+.visual.sand { background: #e4ddd1; }
+.visual.blue { background: #dbe3e4; }
+.visual.clay { background: #e5d9d0; }
+.visual.graphite { background: #d9dad5; }
+.room { position: absolute; inset: 0; perspective: 900px; overflow: hidden; }
+.wall { position: absolute; inset: 0 0 26%; background: linear-gradient(135deg, rgba(255,255,255,.6), rgba(216,211,199,.2)); transform-origin: bottom; }
+.floor { position: absolute; left: -20%; right: -20%; bottom: -35%; height: 65%; background: repeating-linear-gradient(90deg, rgba(100,90,72,.06) 0 2px, transparent 2px 76px); transform: perspective(400px) rotateX(57deg); transform-origin: top; }
+.kitchen { position: absolute; width: 76%; height: 55%; left: 12%; bottom: 18%; }
+.kitchen .upper { position: absolute; left: 17%; right: 10%; top: 0; height: 31%; background: #5c6655; box-shadow: 0 8px 14px rgba(40,45,35,.12); }
+.kitchen .lower { position: absolute; left: 6%; right: 4%; bottom: 7%; height: 45%; display: grid; grid-template-columns: 1fr 1.1fr 1fr 1.25fr; gap: 4px; }
+.kitchen .lower i { background: #69715f; box-shadow: 0 8px 14px rgba(40,45,35,.14); }
+.kitchen .counter { position: absolute; left: 5%; right: 3%; bottom: 51%; height: 4%; background: #d4cbb9; }
+.wardrobe { position: absolute; width: 52%; height: 72%; left: 24%; bottom: 10%; display: grid; grid-template-columns: repeat(4,1fr); gap: 3px; padding: 5px; background: #b99b76; box-shadow: 0 18px 28px rgba(50,42,32,.15); }
+.wardrobe i { background: linear-gradient(100deg, #c8ad8d, #ad8f6d); }
+.wardrobeTop { position: absolute; left: -2%; right: -2%; top: -4px; height: 6px; background: #a68968; }
+.futureObject { position: absolute; width: 52%; height: 35%; left: 24%; bottom: 22%; background: rgba(255,255,255,.58); border: 1px solid rgba(50,50,45,.14); transform: perspective(500px) rotateX(7deg); }
+.futureObject span { position: absolute; height: 100%; width: 1px; background: rgba(50,50,45,.15); }
+.futureObject span:nth-child(1){left:33%}.futureObject span:nth-child(2){left:66%}.futureObject span:nth-child(3){left:50%; top:50%; width:100%; height:1px}
+.badge { position: absolute; left: 18px; bottom: 16px; display: flex; gap: 8px; align-items: center; color: rgba(37,39,34,.65); font-size: 11px; }
+.badge span { padding: 4px 7px; border: 1px solid rgba(37,39,34,.2); border-radius: 5px; font-weight: 700; }
+.compact { height: 240px; }
+@media (max-width: 600px) { .visual { height: 260px; } .compact { height: 200px; } }

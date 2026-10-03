@@ -1,0 +1,9 @@
+.intro { max-width: 800px; margin-bottom: 65px; }
+.intro h1 { margin: 22px 0; }
+.intro p { max-width: 570px; color: var(--muted); line-height: 1.7; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 15px; margin-bottom: 28px; }
+.filters button { border: 0; background: transparent; color: var(--muted); padding: 9px 13px; font-size: 12px; border-radius: 999px; }
+.filters button:hover, .filters .active { background: var(--dark); color: #fff; }
+.filters small { margin-left: 6px; opacity: .6; }
+.grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; }
+@media (max-width: 680px) { .intro { margin-bottom: 40px; }.grid { grid-template-columns: 1fr; } }

@@ -1,0 +1,12 @@
+.tile { min-height: 290px; padding: 24px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: end; background: #e4e2d9; }
+.olive { background: #dbe0d3; }.sand { background: #e5ddd0; }.blue { background: #dbe3e4; }.clay { background: #e7dbd3; }.graphite { background: #dddeda; }
+.art { position: absolute; inset: 0; opacity: .75; }
+.shapeOne, .shapeTwo, .shapeThree { position: absolute; display: block; border: 1px solid rgba(37,39,34,.18); }
+.shapeOne { width: 45%; height: 44%; right: 8%; top: 12%; background: rgba(255,255,255,.22); transform: skewY(-5deg); }
+.shapeTwo { width: 26%; height: 28%; right: 26%; top: 20%; background: rgba(100,114,91,.2); transform: perspective(500px) rotateY(-28deg); }
+.shapeThree { width: 60%; height: 10%; left: 13%; bottom: 29%; background: rgba(255,255,255,.4); transform: skewX(-22deg); }
+.content { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: end; gap: 15px; }
+.content span:first-child { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; }
+.content h3 { margin: 7px 0 6px; }
+.content p { margin: 0; max-width: 220px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+.arrow { flex: 0 0 42px; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: rgba(245,244,239,.8); }

@@ -1,0 +1,9 @@
+.card { background: #eceae3; }
+.visual { display: block; }
+.info { padding: 20px; display: flex; justify-content: space-between; gap: 20px; }
+.info span { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+.info h3 { margin: 7px 0; font-size: 18px; }
+.info strong { font-size: 13px; font-weight: 600; }
+.actions { display: flex; gap: 4px; }
+.actions a, .actions button { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line); background: transparent; color: var(--ink); }
+.actions button { cursor: pointer; }

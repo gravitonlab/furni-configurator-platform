@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Конфигуратор кухни</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#dfe4e2;--bg2:#f0f3f1;--panel:#f8f9f8;--ink:#17201e;--mute:#5a6a66;--line:#cad3d0;--acc:#0f766e;--accink:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171d1c;--bg2:#27302e;--panel:#202826;--ink:#e6eeec;--mute:#93a39f;--line:#36423f;--acc:#4fd1c5;--accink:#06201d}}
+:root[data-theme="dark"]{--bg:#171d1c;--bg2:#27302e;--panel:#202826;--ink:#e6eeec;--mute:#93a39f;--line:#36423f;--acc:#4fd1c5;--accink:#06201d}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.4 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif}
+#app{height:100%;display:flex;flex-direction:column}
+#stage{flex:1;min-height:0;position:relative;background:radial-gradient(ellipse at 50% 35%,var(--bg2),var(--bg) 75%);touch-action:none;cursor:grab}
+canvas{display:block;width:100%;height:100%}
+#dims{position:absolute;left:12px;top:12px;font-size:13px;color:var(--mute);pointer-events:none}
+#panel{background:var(--panel);border-top:1px solid var(--line);padding:14px 16px 16px;overflow:auto;max-height:50%}
+.row{margin-bottom:12px}
+.lab{display:flex;justify-content:space-between;font-size:13px;color:var(--mute);margin-bottom:4px}.lab b{color:var(--ink);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--acc);margin:0}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;padding:9px 4px;border:0;background:transparent;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--acc);color:var(--accink);font-weight:600}
+.sw{display:flex;gap:10px;flex-wrap:wrap}.sw button{width:36px;height:36px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0}
+.sw button[aria-pressed=true]{outline:2px solid var(--acc);outline-offset:2px}
+.tg{display:flex;gap:16px;flex-wrap:wrap}.tg label{display:flex;gap:6px;align-items:center;cursor:pointer}.tg input{accent-color:var(--acc);width:18px;height:18px}
+select{padding:9px 6px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;font-size:14px;min-width:0}
+.tg select{flex:1}
+.mod{display:flex;gap:6px;margin-bottom:6px}.mod select:first-child{flex:1}.mod button{width:38px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);font:inherit;cursor:pointer}
+.btn{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);font:inherit;cursor:pointer;margin-bottom:12px}
+#price{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);padding-top:10px}
+#price span{color:var(--mute);font-size:12px}#price strong{font-size:22px;font-weight:700}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+#shot{position:fixed;inset:0;background:rgba(10,14,18,.88);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;z-index:9;color:#fff;text-align:center}
+#shot.on{display:flex}#shot img{max-width:100%;max-height:72%;border-radius:6px}
+@media (min-width:860px){#app{flex-direction:row}#panel{width:360px;max-height:none;border-top:0;border-left:1px solid var(--line);order:2;padding:20px}}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="stage"><div id="dims"></div></div>
+ <div id="panel">
+  <div class="row"><div class="lab">Планировка</div><div class="seg" id="lay"><button data-v="line">Прямая</button><button data-v="L">Г-образная</button><button data-v="U">П-образная</button></div></div>
+  <div class="row"><div class="lab">Модули линии <b id="rl"></b></div><div class="seg" id="runs"></div><div id="mods" style="margin-top:8px"></div><button class="btn" id="add" style="margin:0">+ Добавить модуль</button></div>
+  <div class="row"><div class="lab">Высота столешницы <b id="vh"></b></div><input id="h" type="range" min="80" max="100" step="1"></div>
+  <div class="row"><div class="lab">Высота пеналов <b id="vt"></b></div><input id="th" type="range" min="200" max="250" step="5"></div>
+  <div class="row tg"><label><input type="checkbox" id="up" checked>Верхние шкафы</label><label><input type="checkbox" id="real">Реалистичный рендер</label></div>
+  <div class="row"><div class="lab">Стиль фасада</div><div class="seg" id="st"><button data-v="flat">Гладкий</button><button data-v="frame">Рамочный</button></div></div>
+  <div class="row"><div class="lab">Цвет фасадов <b id="n1"></b></div><div class="sw" id="sw1"></div></div>
+  <div class="row"><div class="lab">Столешница <b id="n2"></b></div><div class="sw" id="sw2"></div></div>
+  <div class="row"><div class="lab">Фартук <b id="n3"></b></div><div class="sw" id="sw3"></div></div>
+  <div class="row"><div class="lab">Ручки</div><div class="seg" id="hd"><button data-v="bar">Скоба</button><button data-v="knob">Кнопка</button><button data-v="profile">Профиль</button><button data-v="none">Нет</button></div></div>
+  <button class="btn" id="save">Сделать снимок</button>
+  <div class="row"><div class="lab">Экспорт 3D-модели</div>
+   <select id="xf" style="width:100%"><option value="obj">OBJ + MTL</option><option value="dae">DAE (Collada)</option><option value="dxf">DXF (3DFACE)</option><option value="stl">STL</option><option value="all">Все форматы сразу</option></select>
+   <div class="tg" style="margin-top:8px"><select id="xu"><option value="mm">Единицы: мм</option><option value="cm">Единицы: см</option><option value="m">Единицы: м</option></select><label><input type="checkbox" id="xz" checked>Ось Z вверх</label></div>
+   <button class="btn" id="xgo" style="margin:10px 0 4px">Экспортировать (ZIP)</button>
+   <div id="xmsg" style="font-size:12px;color:var(--mute)">Файлы упаковываются в ZIP-архив</div></div>
+  <div id="price"><span>Ориентировочно, без бытовой техники</span><strong id="pv"></strong></div>
+ </div>
+</div>
+<div id="shot"><img id="shotimg" alt="Снимок кухни"><div>Нажмите и удерживайте изображение (на компьютере правая кнопка мыши), чтобы сохранить</div><button class="btn" id="shotx" style="width:auto;padding:10px 28px;color:#fff;border-color:#fff">Закрыть</button></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const T={door:"Шкаф с дверцами",drawers:"Ящики",sink:"Мойка",hob:"Варочная панель",oven:"Духовой шкаф",dish:"Посудомойка",fridge:"Холодильник",tall:"Пенал"};
+const WS=[30,40,45,50,60,70,80,90,100,120];
+const FC=[["Белый","#f1f1ee"],["Серый","#9aa0a6"],["Графит","#3a3e44"],["Дуб","#c9a26b"],["Зелёный","#5b7a68"],["Синий","#34506e"]];
+const CC=[["Белый камень","#e8e8e6"],["Бетон","#8d9094"],["Чёрный камень","#26282b"],["Дерево","#b88a56"]];
+const AC=[["Белый","#f3f3f1"],["Бежевый","#d9ccb8"],["Тёмный","#3b3f44"],["Терракота","#b4674b"]];
+const S={lay:"L",run:"back",h:90,th:220,up:true,st:"frame",fc:3,cc:0,ac:0,hd:"bar",runs:{
+ back:[{t:"fridge",w:60},{t:"door",w:40},{t:"hob",w:60},{t:"drawers",w:60},{t:"sink",w:80}],
+ left:[{t:"dish",w:60},{t:"door",w:60},{t:"drawers",w:60}],
+ right:[{t:"door",w:60},{t:"drawers",w:60}]}};
+const $=id=>document.getElementById(id);
+const stage=$("stage");
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;stage.appendChild(renderer.domElement);
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(35,1,.1,60);
+const hemi=new THREE.HemisphereLight(0xffffff,0x8a94a0,.8);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xffffff,.7);sun.position.set(3,6,6);sun.castShadow=true;
+Object.assign(sun.shadow.camera,{left:-8,right:8,top:8,bottom:-8,near:1,far:25});sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(40,40),new THREE.MeshStandardMaterial({color:0xd7dadd,roughness:.9}));
+floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+const mkWall=(w,h)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({color:0xe6e3de,roughness:.95}));m.receiveShadow=true;scene.add(m);return m};
+const wB=mkWall(24,3),wL=mkWall(14,3),wR=mkWall(14,3),walls=[wB,wL,wR];
+wB.position.set(0,1.5,-.001);wL.rotation.y=Math.PI/2;wR.rotation.y=-Math.PI/2;
+// ---- реалистичный режим
+let REAL=false,envTex=null,grainTex=null,floorTex=null;
+const pm=new THREE.PMREMGenerator(renderer);
+const lin=h=>{const c=new THREE.Color(h);if(REAL)c.convertSRGBToLinear();return c};
+function canvasTex(w,h,draw){const c=document.createElement("canvas");c.width=w;c.height=h;draw(c.getContext("2d"),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;return t}
+function grain(){return canvasTex(512,512,(x,w,h)=>{x.fillStyle="#e4e4e4";x.fillRect(0,0,w,h);
+ for(let i=0;i<1100;i++){const v=110+Math.random()*145|0;x.strokeStyle="rgba("+v+","+v+","+v+","+(.12+Math.random()*.4)+")";x.lineWidth=.5+Math.random()*2.2;const px=Math.random()*w,j=()=>(Math.random()-.5)*16;
+  x.beginPath();x.moveTo(px,0);x.bezierCurveTo(px+j(),h*.3,px+j(),h*.7,px+j(),h);x.stroke()}})}
+function parquet(){const t=canvasTex(512,512,(x,w,h)=>{x.fillStyle="#2c2018";x.fillRect(0,0,w,h);
+ for(let r=0;r<16;r++)for(let c=-1;c<3;c++){const l=140+Math.random()*50|0;x.fillStyle="rgb("+(l+25)+","+(l-5)+","+(l-50)+")";x.fillRect(c*256+(r%2)*128+1,r*32+1,254,30);
+  for(let i=0;i<10;i++){x.fillStyle="rgba(60,35,15,"+Math.random()*.18+")";x.fillRect(c*256+(r%2)*128+Math.random()*250,r*32+Math.random()*30,20+Math.random()*80,1)}}});
+ t.repeat.set(15,15);return t}
+function makeEnv(){const e=new THREE.Scene(),B=THREE.MeshBasicMaterial;
+ const room=new THREE.Mesh(new THREE.BoxGeometry(24,12,24),new B({color:0x9aa2aa,side:THREE.BackSide}));room.position.y=6;e.add(room);
+ [[0,11.8,0,10,.2,10,6],[0,6,11.8,12,6,.2,3],[-11.8,6,0,.2,6,10,2.5],[11.8,6,0,.2,5,8,1.5]].forEach(a=>{
+  const m=new THREE.Mesh(new THREE.BoxGeometry(a[3],a[4],a[5]),new B({color:new THREE.Color().setScalar(a[6])}));m.position.set(a[0],a[1],a[2]);e.add(m)});
+ const f=new THREE.Mesh(new THREE.PlaneGeometry(24,24),new B({color:0x6b5a48}));f.rotation.x=-Math.PI/2;f.position.y=.05;e.add(f);
+ return pm.fromScene(e,.03).texture}
+
+function setReal(on){
+ REAL=on;
+ renderer.outputEncoding=on?THREE.sRGBEncoding:THREE.LinearEncoding;
+ renderer.toneMapping=on?THREE.ACESFilmicToneMapping:THREE.NoToneMapping;renderer.toneMappingExposure=1.1;
+ renderer.shadowMap.type=on?THREE.PCFSoftShadowMap:THREE.PCFShadowMap;
+ if(on&&!envTex){envTex=makeEnv();grainTex=grain();floorTex=parquet()}
+ scene.environment=on?envTex:null;hemi.intensity=on?.2:.8;sun.intensity=on?1.6:.7;
+ sun.shadow.bias=-.0004;sun.shadow.normalBias=on?.02:0;
+ sun.shadow.mapSize.set(on?2048:1024,on?2048:1024);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}
+ floor.material.dispose();floor.material=new THREE.MeshStandardMaterial(on?{map:floorTex,roughness:.45}:{color:lin(0xd7dadd),roughness:.9});
+ walls.forEach(w=>{w.material.color.copy(lin(0xe6e3de));w.material.needsUpdate=true});
+ build();
+}
+const runKeys=()=>S.lay==="line"?["back"]:S.lay==="L"?["back","left"]:["back","left","right"];
+const orbit={th:.6,ph:1.25,r:7,tx:0,ty:1,tz:1};
+let g=new THREE.Group();scene.add(g);
+function build(){
+ scene.remove(g);g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()});
+ g=new THREE.Group();scene.add(g);
+ const D=.6,Du=.32,ph=.1,ct=.04,top=S.h/100,hb=top-ph-ct,ht=S.th/100,yu=1.5,uh=.72,fz=D-.009;
+ const mat=(h,r,mt,n,map)=>{const x=new THREE.MeshStandardMaterial({color:lin(h),roughness:r,metalness:mt,map:map||null});x.name=n;return x};
+ const mF=mat(FC[S.fc][1],REAL?.35:.6,0,"Facade",REAL&&S.fc===3?grainTex:null),mB=mat("#ececea",.8,0,"Carcass"),mP=mat("#25282c",.9,0,"Plinth"),
+  mC=mat(CC[S.cc][1],.4,0,"Countertop",REAL&&S.cc===3?grainTex:null),mA=mat(AC[S.ac][1],.5,0,"Apron"),mM=mat("#c4c8cc",REAL?.22:.28,.85,"Metal"),
+  mG=mat("#111315",.2,.3,"Glass"),mS=mat("#b9bec3",.35,.7,"Steel");
+ const bx=(p,w,h,d,x,y,z,m)=>{const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);b.position.set(x,y,z);b.castShadow=b.receiveShadow=true;p.add(b);return b};
+ const cyl=(p,r,h,x,y,z,m,rx)=>{const c=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,20),m);if(rx)c.rotation.x=Math.PI/2;c.position.set(x,y,z);c.castShadow=true;p.add(c)};
+ let price=0,nf=0;
+ const fac=(p,w,h,x,y,z)=>{nf++;const th=.018;
+  if(S.st==="flat"||w<.2||h<.2)bx(p,w,h,th,x,y,z,mF);
+  else{const f=.055;bx(p,w,h,th*.5,x,y,z-th*.25,mF);bx(p,w,f,th,x,y+h/2-f/2,z,mF);bx(p,w,f,th,x,y-h/2+f/2,z,mF);bx(p,f,h-2*f,th,x-w/2+f/2,y,z,mF);bx(p,f,h-2*f,th,x+w/2-f/2,y,z,mF)}};
+ const hdl=(p,k,x,y,w,h,z,e,pos)=>{
+  if(S.hd==="none")return;const zz=z+.02;
+  if(S.hd==="profile"){bx(p,w-.006,.025,.03,x,y+(pos||1)*(h/2-.0125),zz-.005,mM);return}
+  const yy=y+pos*(h/2-.06);
+  if(S.hd==="knob"){cyl(p,.018,.03,k==="w"?x:x+e*(w/2-.05),yy,zz,mM,1);return}
+  if(k==="w")bx(p,Math.min(.16,w*.6),.012,.02,x,yy,zz,mM);else bx(p,.012,.14,.02,x+e*(w/2-.04),yy,zz,mM)};
+ const doors=(p,cx,w,yc,h,pos,z)=>{const n=w>.61?2:1,dw=w/n;for(let i=0;i<n;i++){const x=cx-w/2+dw*(i+.5);fac(p,dw-.004,h-.004,x,yc,z);hdl(p,"d",x,yc,dw-.004,h-.004,z,n===2?(i?-1:1):1,pos)}};
+ const drw=(p,cx,w,yb,hh,fr)=>{let y=yb;fr.forEach(f=>{const h=hh*f;fac(p,w-.004,h-.004,cx,y+h/2,fz);hdl(p,"w",cx,y+h/2,w-.004,h-.004,fz,0,1);y+=h})};
+ const module=(p,m,x0)=>{
+  const w=m.w/100,cx=x0+w/2,t=m.t;
+  if(t==="fridge"){
+   const fw=w-.01,fd=D-.05,hx=cx+fw/2-.05;
+   bx(p,fw,ht-.02,fd,cx,ht/2+.01,fd/2,mS);
+   bx(p,fw-.004,.6,.03,cx,.32,fd,mS);bx(p,fw-.004,ht-.64,.03,cx,.64+(ht-.64)/2,fd,mS);
+   bx(p,fw,.006,.004,cx,.63,fd+.016,mG);bx(p,.014,.3,.03,hx,.45,fd+.03,mM);bx(p,.014,.3,.03,hx,.85,fd+.03,mM);return}
+  if(t==="tall"){
+   const hh=ht-ph,h1=hh*.58;price+=16000*w/.6;
+   bx(p,w-.002,hh,D-.02,cx,ph+hh/2,(D-.02)/2,mB);bx(p,w-.002,ph,D-.06,cx,ph/2,(D-.06)/2,mP);
+   doors(p,cx,w,ph+h1/2,h1,1,fz);doors(p,cx,w,ph+h1+(hh-h1)/2,hh-h1,-1,fz);return}
+  bx(p,w-.002,hb,D-.02,cx,ph+hb/2,(D-.02)/2,mB);bx(p,w-.002,ph,D-.06,cx,ph/2,(D-.06)/2,mP);
+  bx(p,w,ct,D+.02,cx,top-ct/2,(D+.02)/2,mC);
+  const ah=S.up?yu-top:.6;bx(p,w,ah,.012,cx,top+ah/2,.006,mA);
+  price+=({door:9000,drawers:14000,sink:11000,hob:10000,oven:8000,dish:9500}[t]||0)*w/.6+w*12500;
+  if(t==="door"||t==="sink")doors(p,cx,w,ph+hb/2,hb,1,fz);
+  else if(t==="drawers")drw(p,cx,w,ph,hb,[.24,.38,.38]);
+  else if(t==="hob")drw(p,cx,w,ph,hb,[.3,.7]);
+  else if(t==="oven"){const oh=.6,d2=hb-oh-.008;
+   bx(p,w-.01,oh,.03,cx,ph+hb-oh/2-.004,fz,mG);bx(p,w-.1,.28,.006,cx,ph+hb-.38,fz+.017,mS);bx(p,w-.1,.015,.025,cx,ph+hb-.07,fz+.03,mM);
+   fac(p,w-.004,d2-.002,cx,ph+d2/2,fz);hdl(p,"w",cx,ph+d2/2,w-.004,d2,fz,0,1)}
+  else if(t==="dish"){fac(p,w-.004,hb-.004,cx,ph+hb/2,fz);bx(p,w-.04,.04,.01,cx,ph+hb-.03,fz+.014,mS);hdl(p,"d",cx,ph+hb/2,w-.004,hb,fz,1,1)}
+  if(t==="sink"){bx(p,w-.1,.004,.42,cx,top+.002,.3,mS);bx(p,w-.18,.005,.32,cx,top+.0045,.3,mG);cyl(p,.015,.25,cx,top+.125,.1,mM);bx(p,.012,.012,.14,cx,top+.25,.17,mM)}
+  if(t==="hob"){bx(p,w-.04,.006,.5,cx,top+.003,.3,mG);[[-1,-1],[1,-1],[-1,1],[1,1]].forEach(a=>cyl(p,.065,.002,cx+a[0]*w*.22,top+.007,.3+a[1]*.11,mS))}
+  if(S.up){
+   if(t==="hob"){bx(p,w,.14,.5,cx,yu+.12,.25,mS);const ch=2.35-yu-.19;bx(p,.3,ch,.26,cx,yu+.19+ch/2,.13,mS);price+=5000}
+   else{bx(p,w-.002,uh,Du-.02,cx,yu+uh/2,(Du-.02)/2,mB);doors(p,cx,w,yu+uh/2,uh,-1,Du-.009);price+=6500*w/.6}}
+ };
+ const tots={};
+ runKeys().forEach(k=>{
+  const L=S.runs[k].map(m=>m.w/100),tot=L.reduce((a,b)=>a+b,0),p=new THREE.Group();g.add(p);let off=0;
+  S.runs[k].forEach((m,i)=>{module(p,m,k==="left"?tot-off-L[i]:off);off+=L[i]});
+  tots[k]=tot;const A=tots.back;
+  if(k==="back")p.position.set(-tot/2,0,0);
+  else if(k==="left"){p.rotation.y=Math.PI/2;p.position.set(-A/2,0,D+tot)}
+  else{p.rotation.y=-Math.PI/2;p.position.set(A/2,0,D)}
+ });
+ const A=tots.back;
+ wL.visible=S.lay!=="line";wR.visible=S.lay==="U";wL.position.set(-A/2-.001,1.5,4);wR.position.set(A/2+.001,1.5,4);
+ orbit.tz=(Math.max(tots.left||0,tots.right||0)+D)/2;orbit.ty=1;
+ $("pv").textContent="≈ "+Math.round((price+nf*350)/1000)*1000+" ₽";
+ $("dims").textContent=runKeys().map(k=>({back:"Основная",left:"Левая",right:"Правая"}[k])+" "+Math.round(tots[k]*100)+" см").join(" · ");
+ $("vh").textContent=S.h+" см";$("vt").textContent=S.th+" см";
+ $("n1").textContent=FC[S.fc][0];$("n2").textContent=CC[S.cc][0];$("n3").textContent=AC[S.ac][0];
+ renderMods();
+}
+function renderMods(){
+ const keys=runKeys();if(!keys.includes(S.run))S.run="back";
+ const rb=$("runs");rb.innerHTML="";
+ keys.forEach(k=>{const b=document.createElement("button");b.textContent={back:"Основная",left:"Левое крыло",right:"Правое крыло"}[k];b.setAttribute("aria-pressed",k===S.run);b.onclick=()=>{S.run=k;renderMods()};rb.appendChild(b)});
+ rb.style.display=keys.length>1?"":"none";
+ const list=S.runs[S.run];$("rl").textContent=list.reduce((a,m)=>a+m.w,0)+" см";
+ const box=$("mods");box.innerHTML="";
+ list.forEach((m,i)=>{
+  const r=document.createElement("div");r.className="mod";
+  const a=document.createElement("select");Object.entries(T).forEach(([v,n])=>{const o=new Option(n,v);o.selected=v===m.t;a.add(o)});a.onchange=()=>{m.t=a.value;build()};
+  const b=document.createElement("select");WS.forEach(v=>{const o=new Option(v+" см",v);o.selected=v===m.w;b.add(o)});b.onchange=()=>{m.w=+b.value;build()};
+  const x=document.createElement("button");x.textContent="×";x.setAttribute("aria-label","Удалить модуль");x.onclick=()=>{if(list.length>1){list.splice(i,1);build()}};
+  r.append(a,b,x);box.appendChild(r)});
+}
+// UI
+function seg(id,key,cb){const bs=[...$(id).children],sync=()=>bs.forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===S[key]));
+ bs.forEach(b=>b.onclick=()=>{S[key]=b.dataset.v;sync();if(cb)cb();build()});sync()}
+function swatches(id,list,key){const bx=$(id),sync=()=>[...bx.children].forEach((b,i)=>b.setAttribute("aria-pressed",i===S[key]));
+ list.forEach((c,i)=>{const b=document.createElement("button");b.style.background=c[1];b.title=c[0];b.setAttribute("aria-label",c[0]);b.onclick=()=>{S[key]=i;sync();build()};bx.appendChild(b)});sync()}
+seg("lay","lay",()=>{orbit.r=S.lay==="line"?6:7.5});seg("st","st");seg("hd","hd");
+swatches("sw1",FC,"fc");swatches("sw2",CC,"cc");swatches("sw3",AC,"ac");
+$("h").value=S.h;$("th").value=S.th;
+$("h").oninput=e=>{S.h=+e.target.value;build()};$("th").oninput=e=>{S.th=+e.target.value;build()};
+$("up").onchange=e=>{S.up=e.target.checked;build()};
+$("real").onchange=e=>setReal(e.target.checked);
+$("add").onclick=()=>{S.runs[S.run].push({t:"door",w:60});build()};
+$("shotx").onclick=()=>$("shot").classList.remove("on");
+// камера
+function cam(){const{th,ph,r,tx,ty,tz}=orbit;camera.position.set(tx+r*Math.sin(ph)*Math.sin(th),ty+r*Math.cos(ph),tz+r*Math.sin(ph)*Math.cos(th));camera.lookAt(tx,ty,tz)}
+const ptrs=new Map();let pinch=0;
+const zoom=f=>{orbit.r=Math.min(16,Math.max(2.5,orbit.r*f))};
+stage.addEventListener("pointerdown",e=>{stage.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);pinch=0});
+stage.addEventListener("pointerup",e=>ptrs.delete(e.pointerId));stage.addEventListener("pointercancel",e=>ptrs.delete(e.pointerId));
+stage.addEventListener("pointermove",e=>{
+ if(!ptrs.has(e.pointerId))return;const p=ptrs.get(e.pointerId);
+ if(ptrs.size===1){orbit.th-=(e.clientX-p[0])*.008;orbit.ph=Math.min(REAL?1.45:1.7,Math.max(.35,orbit.ph-(e.clientY-p[1])*.006))}
+ else if(ptrs.size===2){ptrs.set(e.pointerId,[e.clientX,e.clientY]);const[a,b]=[...ptrs.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pinch)zoom(pinch/d);pinch=d}
+ ptrs.set(e.pointerId,[e.clientX,e.clientY])});
+stage.addEventListener("wheel",e=>{e.preventDefault();zoom(Math.exp(e.deltaY*.001))},{passive:false});
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+new ResizeObserver(resize).observe(stage);
+$("save").onclick=()=>{
+ const pr=renderer.getPixelRatio();renderer.setPixelRatio(Math.max(2,pr));resize();
+ renderer.setClearColor(matchMedia("(prefers-color-scheme: dark)").matches?0x171d1c:0xdfe4e2,1);
+ cam();renderer.render(scene,camera);$("shotimg").src=renderer.domElement.toDataURL("image/png");
+ renderer.setClearColor(0,0);renderer.setPixelRatio(pr);resize();$("shot").classList.add("on")};
+// экспорт
+function collect(){
+ g.updateMatrixWorld(true);const parts=[];let i=0;
+ g.traverse(o=>{if(!o.isMesh)return;
+  const gm=o.geometry,P=gm.attributes.position,N=gm.attributes.normal,v=new THREE.Vector3(),pos=[],nor=[];
+  for(let j=0;j<P.count;j++){v.fromBufferAttribute(P,j).applyMatrix4(o.matrixWorld);pos.push(v.x,v.y,v.z);v.fromBufferAttribute(N,j).transformDirection(o.matrixWorld);nor.push(v.x,v.y,v.z)}
+  const c=o.material.color.clone();if(REAL)c.convertLinearToSRGB();
+  parts.push({name:"part_"+String(++i).padStart(4,"0"),mat:o.material.name||"Facade",col:c.getHex(),pos,nor,idx:Array.from(gm.index.array)})});
+ return parts}
+const q=v=>String(Math.round(v*1e4)/1e4);
+function xfParts(P,unit,zup){
+ const k={mm:1000,cm:100,m:1}[unit]||1;
+ return P.map(p=>{const pos=[],nor=[];
+  for(let i=0;i<p.pos.length;i+=3){const x=p.pos[i],y=p.pos[i+1],z=p.pos[i+2],a=p.nor[i],b=p.nor[i+1],c=p.nor[i+2];
+   if(zup){pos.push(x*k,-z*k,y*k);nor.push(a,-c,b)}else{pos.push(x*k,y*k,z*k);nor.push(a,b,c)}}
+  return {...p,pos,nor}})}
+const mats=P=>{const m={};P.forEach(p=>m[p.mat]=p.col);return m};
+function toOBJ(P,mtl){let o="# Wardrobe configurator\nmtllib "+mtl+"\n",off=1;
+ P.forEach(p=>{o+="o "+p.name+"\nusemtl "+p.mat+"\n";
+  for(let i=0;i<p.pos.length;i+=3)o+="v "+q(p.pos[i])+" "+q(p.pos[i+1])+" "+q(p.pos[i+2])+"\n";
+  for(let i=0;i<p.nor.length;i+=3)o+="vn "+q(p.nor[i])+" "+q(p.nor[i+1])+" "+q(p.nor[i+2])+"\n";
+  for(let i=0;i<p.idx.length;i+=3){const a=p.idx[i]+off,b=p.idx[i+1]+off,c=p.idx[i+2]+off;o+="f "+a+"//"+a+" "+b+"//"+b+" "+c+"//"+c+"\n"}
+  off+=p.pos.length/3});
+ return o}
+function toMTL(P){return Object.entries(mats(P)).map(([n,c])=>{const rgb=[c>>16&255,c>>8&255,c&255].map(x=>q(x/255)).join(" "),mt=n==="Metal";
+ return "newmtl "+n+"\nKa 0 0 0\nKd "+rgb+"\nKs "+(mt?"0.8 0.8 0.8":"0.1 0.1 0.1")+"\nNs "+(mt?120:30)+"\nd 1\nillum 2\n"}).join("\n")}
+function toDAE(P,unit,zup){
+ const k={mm:["millimeter",.001],cm:["centimeter",.01],m:["meter",1]}[unit],ms=mats(P),now=new Date().toISOString(),arr=a=>a.map(q).join(" ");
+ let o='<?xml version="1.0" encoding="utf-8"?>\n<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">\n<asset><contributor><authoring_tool>Wardrobe configurator</authoring_tool></contributor><created>'+now+'</created><modified>'+now+'</modified><unit name="'+k[0]+'" meter="'+k[1]+'"/><up_axis>'+(zup?"Z_UP":"Y_UP")+'</up_axis></asset>\n';
+ o+="<library_effects>"+Object.entries(ms).map(([n,c])=>'<effect id="E_'+n+'"><profile_COMMON><technique sid="common"><phong><diffuse><color>'+[c>>16&255,c>>8&255,c&255].map(x=>q(x/255)).join(" ")+' 1</color></diffuse></phong></technique></profile_COMMON></effect>').join("")+"</library_effects>\n";
+ o+="<library_materials>"+Object.keys(ms).map(n=>'<material id="M_'+n+'" name="'+n+'"><instance_effect url="#E_'+n+'"/></material>').join("")+"</library_materials>\n";
+ o+="<library_geometries>"+P.map(p=>{const id="G_"+p.name,nv=p.pos.length/3;
+  const src=(s,a)=>'<source id="'+id+s+'"><float_array id="'+id+s+'a" count="'+a.length+'">'+arr(a)+'</float_array><technique_common><accessor source="#'+id+s+'a" count="'+nv+'" stride="3"><param name="X" type="float"/><param name="Y" type="float"/><param name="Z" type="float"/></accessor></technique_common></source>';
+  return '<geometry id="'+id+'" name="'+p.name+'"><mesh>'+src("p",p.pos)+src("n",p.nor)+'<vertices id="'+id+'v"><input semantic="POSITION" source="#'+id+'p"/></vertices><triangles material="'+p.mat+'" count="'+p.idx.length/3+'"><input semantic="VERTEX" source="#'+id+'v" offset="0"/><input semantic="NORMAL" source="#'+id+'n" offset="0"/><p>'+p.idx.join(" ")+'</p></triangles></mesh></geometry>'}).join("")+"</library_geometries>\n";
+ o+='<library_visual_scenes><visual_scene id="Scene" name="Wardrobe">'+P.map(p=>'<node id="N_'+p.name+'" name="'+p.name+'"><instance_geometry url="#G_'+p.name+'"><bind_material><technique_common><instance_material symbol="'+p.mat+'" target="#M_'+p.mat+'"/></technique_common></bind_material></instance_geometry></node>').join("")+'</visual_scene></library_visual_scenes>\n<scene><instance_visual_scene url="#Scene"/></scene>\n</COLLADA>';
+ return o}
+function toSTL(P){let nt=0;P.forEach(p=>nt+=p.idx.length/3);
+ const buf=new ArrayBuffer(84+50*nt),dv=new DataView(buf);dv.setUint32(80,nt,true);let o=84;
+ P.forEach(p=>{for(let i=0;i<p.idx.length;i+=3){
+  const v=[0,1,2].map(j=>{const n=p.idx[i+j]*3;return [p.pos[n],p.pos[n+1],p.pos[n+2]]});
+  const u=[v[1][0]-v[0][0],v[1][1]-v[0][1],v[1][2]-v[0][2]],w=[v[2][0]-v[0][0],v[2][1]-v[0][1],v[2][2]-v[0][2]];
+  const nx=u[1]*w[2]-u[2]*w[1],ny=u[2]*w[0]-u[0]*w[2],nz=u[0]*w[1]-u[1]*w[0],l=Math.hypot(nx,ny,nz)||1;
+  [nx/l,ny/l,nz/l].forEach(x=>{dv.setFloat32(o,x,true);o+=4});
+  v.forEach(a=>a.forEach(x=>{dv.setFloat32(o,x,true);o+=4}));o+=2}});
+ return new Uint8Array(buf)}
+function toDXF(P,unit){
+ let o="0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1009\n9\n$INSUNITS\n70\n"+({mm:4,cm:5,m:6}[unit])+"\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n";
+ P.forEach(p=>{for(let i=0;i<p.idx.length;i+=3){o+="0\n3DFACE\n8\n"+p.mat+"\n";
+  for(let j=0;j<4;j++){const n=p.idx[i+Math.min(j,2)]*3;o+=(10+j)+"\n"+q(p.pos[n])+"\n"+(20+j)+"\n"+q(p.pos[n+1])+"\n"+(30+j)+"\n"+q(p.pos[n+2])+"\n"}}});
+ return o+"0\nENDSEC\n0\nEOF\n"}
+function zip(files){
+ const T=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;T[n]=c>>>0}
+ const crc=d=>{let c=-1;for(let i=0;i<d.length;i++)c=T[(c^d[i])&255]^(c>>>8);return (~c)>>>0};
+ const enc=new TextEncoder(),parts=[],cd=[],dt=new Date();let off=0;
+ const tm=(dt.getHours()<<11)|(dt.getMinutes()<<5)|(dt.getSeconds()>>1),dd=((dt.getFullYear()-1980)<<9)|((dt.getMonth()+1)<<5)|dt.getDate();
+ files.forEach(f=>{const nm=enc.encode(f.name),c=crc(f.data),n=f.data.length,h=new DataView(new ArrayBuffer(30));
+  h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(10,tm,true);h.setUint16(12,dd,true);h.setUint32(14,c,true);h.setUint32(18,n,true);h.setUint32(22,n,true);h.setUint16(26,nm.length,true);
+  parts.push(new Uint8Array(h.buffer),nm,f.data);
+  const e=new DataView(new ArrayBuffer(46));
+  e.setUint32(0,0x02014b50,true);e.setUint16(4,20,true);e.setUint16(6,20,true);e.setUint16(8,0x0800,true);e.setUint16(12,tm,true);e.setUint16(14,dd,true);e.setUint32(16,c,true);e.setUint32(20,n,true);e.setUint32(24,n,true);e.setUint16(28,nm.length,true);e.setUint32(42,off,true);
+  cd.push(new Uint8Array(e.buffer),nm);off+=30+nm.length+n});
+ let cs=0;cd.forEach(x=>cs+=x.length);
+ const end=new DataView(new ArrayBuffer(22));end.setUint32(0,0x06054b50,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);end.setUint32(12,cs,true);end.setUint32(16,off,true);
+ return new Blob([...parts,...cd,new Uint8Array(end.buffer)],{type:"application/zip"})}
+
+async function doExport(){
+ const msg=$("xmsg"),fmt=$("xf").value,unit=$("xu").value,zup=$("xz").checked,base="kitchen",fl=[];
+ msg.textContent="Готовлю файлы…";
+ try{
+  const Pz=xfParts(collect(),unit,zup),enc=new TextEncoder(),want=f=>fmt==="all"||fmt===f;
+  if(want("obj"))fl.push({name:base+".obj",data:enc.encode(toOBJ(Pz,base+".mtl"))},{name:base+".mtl",data:enc.encode(toMTL(Pz))});
+  if(want("dae"))fl.push({name:base+".dae",data:enc.encode(toDAE(Pz,unit,zup))});
+  if(want("dxf"))fl.push({name:base+".dxf",data:enc.encode(toDXF(Pz,unit))});
+  if(want("stl"))fl.push({name:base+".stl",data:toSTL(Pz)});
+  const un={mm:"миллиметры",cm:"сантиметры",m:"метры"}[unit];
+  fl.push({name:"README.txt",data:enc.encode("Кухонный гарнитур\r\nЕдиницы: "+un+"\r\nОсь вверх: "+(zup?"Z (фасады смотрят в сторону -Y)":"Y")+"\r\nМатериалы: Facade, Carcass, Plinth, Countertop, Apron, Metal, Glass, Steel\r\nСтены и пол в экспорт не входят\r\n")});
+  const dl=window.claude&&await window.claude.use("downloads");
+  if(!dl){msg.textContent="Сохранение файлов недоступно в этом окне";return}
+  await dl.save({filename:base+"_"+fmt+".zip",data:zip(fl)});msg.textContent="Архив сохранён";
+ }catch(e){msg.textContent=e&&e.code==="declined"?"Сохранение отменено":"Не удалось сохранить файл"}
+}
+$("xgo").onclick=doExport;
+build();resize();
+(function loop(){cam();renderer.render(scene,camera);requestAnimationFrame(loop)})();
+</script>
+</body>
+</html>
